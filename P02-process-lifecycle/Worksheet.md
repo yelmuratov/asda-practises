@@ -72,6 +72,8 @@ Draw arrows or complete this line with evidence labels:
 new --Popen--> running (CPU phase, 0.75 s) --input()--> waiting for terminal input (STAT S+) --Enter--> running (writes file) --return EXIT_CODE 7--> exited --wait()--> reaped by parent
 ```
 
+Ready (runnable) means the process could run and only needs a CPU; running means it is using a CPU now; blocked (waiting) means it cannot continue until an event happens. During the CPU phase the child moved between ready and running; at `input()` it was blocked until I pressed Enter. The order of lines in my terminal does not prove the exact order in which the kernel gave out CPU time.
+
 - Creation evidence (`Popen` or `fork`): after `subprocess.Popen`, the parent printed "child PID is 196865"; the child printed PID=196865 PPID=196864.
 - Event that made the child wait: `input()` needed a line from the terminal.
 - Event that let the child continue: I pressed Enter in Terminal A (the output file was written at 20:28:12).
@@ -98,11 +100,11 @@ Windows has no `fork()`. `CreateProcess` creates a new process and loads the new
 
 ## 5. Controlled change
 
-- I changed: `EXIT_CODE` / `CPU_SECONDS`
-- New value: ____________________
-- My prediction: ______________________________________________________________
-- Visible result: _____________________________________________________________
-- Did the output file agree with the result? ___________________________________
+- I changed: `EXIT_CODE` (in `starter/child.py`)
+- New value: 0 (was 7)
+- My prediction: the parent will report code 0. (Correct.)
+- Visible result: the child printed "exiting with code 0." and the parent printed "wait() returned; child exit code was 0." The line "non-zero is intentional in this lab" no longer appeared, and the parent finished normally (child PID 226079, PPID 226059).
+- Did the output file agree with the result? Yes: `output/child-result.txt` (written at 20:36:20) shows `child_pid=226079` and `requested_exit_code=0`.
 
 ## 6. Runtime ADR — provisional project runtime
 
@@ -110,32 +112,32 @@ Windows has no `fork()`. `CreateProcess` creates a new process and loads the new
 
 - **Decision.** Provisional choice: C#/.NET / lecturer-agreed Java:
 
-  ____________________________________________________________________________
+  C#/.NET with the .NET 10 SDK (provisional). The same SDK runs on Windows, Linux and macOS, so a team with mixed laptops can use one language and one set of tools.
 
 - **Context and evidence.** How do mixed developer laptops affect this? What toolchain/support/portability evidence do you have?
 
-  ____________________________________________________________________________
+  With mixed laptops, the runtime must install and behave the same on Windows, Linux and macOS. Evidence from my own laptop (Kali Linux): the .NET 10.0.401 SDK is installed and `dotnet --version` shows 10.0.401 (P01 Tool-access). I also found that an old system .NET 6 was first on PATH in zsh until I fixed `~/.zshrc`, so PATH setup is a real portability risk. I have not checked .NET on Windows or macOS myself; that .NET supports them comes from Microsoft's documentation. This P02 lab ran in Python, so it gives no evidence about .NET performance.
 
 - **Unknowns to check before committing:**
 
-  ____________________________________________________________________________
+  Which .NET version later labs expect; whether Windows and macOS laptops can install the .NET 10 SDK without administrator rights; which C# editor or IDE to use (none is installed on my laptop yet); whether the PostgreSQL connection library works the same on every laptop.
 
 - **Consequence and trade-off of the provisional choice:**
 
-  ____________________________________________________________________________
+  Consequence: everyone uses one language and one SDK on any operating system, with built-in commands to create, build and test projects, and with async/await and threads for handling many requests later. Trade-off: every laptop must install the right SDK and set PATH correctly (my own zsh problem shows this can go wrong); anyone who knows only Java or Python needs time to learn C#; and the small lab helpers like P02 stay in Python, so the course uses two languages.
 
 - **Supporting mini decision:** Why does this parent wait for its child before reporting the synthetic result?
 
-  ____________________________________________________________________________
+  The child's exit code and its output file only exist once the child has finished, so the parent must wait to report the real result instead of a guess. Waiting also lets the kernel reap the finished child; without `wait()`, the ended child would stay as a "zombie" entry until the parent exits. Trade-off: the parent cannot do anything else while it waits, which is acceptable for one short helper.
 
 ## 7. Exit check
 
 Tick each item you can show the teacher:
 
-- [ ] I identified a PID and the parent/child relationship.
-- [ ] I explained why `input()` causes the child to wait.
-- [ ] I used an observation or honestly marked a tool unavailable.
-- [ ] I identified the intentional exit code and synthetic output file.
-- [ ] I completed the boundary diagram, lifecycle, Windows/POSIX comparison and ADR.
-- [ ] I explained ready versus blocked and why saved output survives exit.
+- [x] I identified a PID and the parent/child relationship.
+- [x] I explained why `input()` causes the child to wait.
+- [x] I used an observation or honestly marked a tool unavailable.
+- [x] I identified the intentional exit code and synthetic output file.
+- [x] I completed the boundary diagram, lifecycle, Windows/POSIX comparison and ADR.
+- [x] I explained ready versus blocked and why saved output survives exit.
 - [ ] I saved this worksheet in the location the teacher specified.

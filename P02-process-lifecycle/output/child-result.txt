@@ -1,6 +1,6 @@
 P02 synthetic lab output
-child_pid=221108
-parent_pid=221064
+child_pid=226079
+parent_pid=226059
 platform=Linux
-cpu_iterations=8849390
-requested_exit_code=7
+cpu_iterations=8951940
+requested_exit_code=0
