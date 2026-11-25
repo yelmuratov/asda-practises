@@ -2,18 +2,20 @@
 
 Members: Salimbay (working alone).
 
-Working alone, I use an AI assistant (Claude) to draft the documentation. I check every draft, ask for changes and decide what is committed. When later labs need code, I write it myself.
+I own every part of P01 and made every decision in it, for example: working alone; leaving payment, cancellation and email out of version one; using C# with .NET 10 for later labs.
 
-## Drafter and checker for each part
+## Owner and checker for each part
 
-1. Scope: drafted by Claude; checked and changed by Salimbay (I had the questions table turned into a numbered list).
-2. Requirements: drafted by Claude; checked by Salimbay.
-3. Glossary: drafted by Claude; checked by Salimbay.
-4. Context: drafted by Claude; checked by Salimbay.
-5. Tool access: checks run by Claude on my laptop; checked by Salimbay. I found that the first check missed the .NET 10 SDK in ~/.dotnet, and the record was corrected.
-6. Evidence: to be drafted by Claude and checked by Salimbay.
+Working alone, I own and check every part myself.
 
-My individual reflection is written by me, in my own words.
+1. Scope: owner Salimbay; checked by Salimbay. I changed the questions table into a numbered list.
+2. Requirements: owner Salimbay; checked by Salimbay.
+3. Glossary: owner Salimbay; checked by Salimbay.
+4. Context: owner Salimbay; checked by Salimbay.
+5. Tool access: owner Salimbay; checked by Salimbay. I found that the first check missed the .NET 10 SDK in ~/.dotnet, and the record was corrected.
+6. Evidence: owner Salimbay; checked by Salimbay.
+
+My individual reflection is in reflections/Individual-template.md.
 
 ## Second check
 
