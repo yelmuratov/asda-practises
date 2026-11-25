@@ -8,8 +8,8 @@ Checked on 2026-11-25 on my own laptop. Support owner for all items: Salimbay. C
    - Next action: ask the teacher whether later labs expect a specific editor or IDE for C#.
 2. Git
    - Status: available
-   - What I checked: git 2.53.0 is installed and my user name is set. The repository has a GitHub remote, and `git ls-remote` reached it. Local main is 3 commits ahead of GitHub (not pushed yet).
-   - Next action: push the P01 commits to GitHub.
+   - What I checked: git 2.53.0 is installed and my user name is set. The repository has a GitHub remote, and `git ls-remote` reached it. On 2026-11-25 the P01 commits were pushed, and `git status -sb` showed local main matching GitHub.
+   - Next action: push after each finished part, so the work is not only on my laptop.
 3. Operating system
    - Status: available
    - What I checked: Kali GNU/Linux Rolling 2026.3, kernel 7.2.15.
