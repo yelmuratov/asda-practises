@@ -1,8 +1,28 @@
 # Tool access
 
-For editor, Git, Windows/Linux and database tools, record:
-- Available / not checked / help needed
-- What you actually checked
-- Support owner and next action
+Checked on 2026-11-25 on my own laptop. Support owner for all items: Salimbay. C#/.NET and PostgreSQL are planning assumptions to confirm with the teacher.
 
-C#/.NET and PostgreSQL are planning assumptions to confirm with the teacher.
+1. Editor
+   - Status: available
+   - What I checked: vim, Neovim and nano are installed. VS Code and Rider are not installed.
+   - Next action: ask the teacher whether later labs expect a specific editor or IDE for C#.
+2. Git
+   - Status: available
+   - What I checked: git 2.53.0 is installed and my user name is set. The repository has a GitHub remote, and `git ls-remote` reached it. Local main is 3 commits ahead of GitHub (not pushed yet).
+   - Next action: push the P01 commits to GitHub.
+3. Operating system
+   - Status: available
+   - What I checked: Kali GNU/Linux Rolling 2026.3, kernel 7.2.15.
+   - Next action: ask the teacher whether lab instructions assume Windows, and note any commands that differ on Linux.
+4. C#/.NET
+   - Status: available, shell setup needed
+   - What I checked: SDKs 10.0.401 and 8.0.425 are installed in ~/.dotnet, and an old 6.0.400 (support ended November 2024) in /usr/share/dotnet. ~/.bashrc puts ~/.dotnet first on PATH, but my shell is zsh and ~/.zshrc does not, so typing `dotnet` in zsh runs 6.0.400. Python 3.14.10 is also installed.
+   - Next action: add the .NET PATH lines to ~/.zshrc and check that `dotnet --version` shows 10.0.401. Ask the teacher which .NET version labs require and whether Python is allowed.
+5. Database (PostgreSQL)
+   - Status: available, not running
+   - What I checked: the psql 18.6 client and the PostgreSQL 18 server are installed. The postgresql service is inactive; I did not start it or connect to a database. No GUI tool (pgAdmin, DBeaver) is installed.
+   - Next action: confirm with the teacher that PostgreSQL is the lab database; start the service and test a connection when a lab needs it.
+6. Other tools
+   - Status: available, not tested
+   - What I checked: Firefox, Chromium and Google Chrome are installed. Docker 28.5.2 is installed; I did not run a container.
+   - Next action: none for P01.
