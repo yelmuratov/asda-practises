@@ -15,9 +15,9 @@ Checked on 2026-11-25 on my own laptop. Support owner for all items: Salimbay. I
    - What I checked: Kali GNU/Linux Rolling 2026.3, kernel 7.2.15.
    - Next action: ask the teacher whether lab instructions assume Windows, and note any commands that differ on Linux.
 4. C#/.NET
-   - Status: available, shell setup needed
-   - What I checked: SDKs 10.0.401 and 8.0.425 are installed in ~/.dotnet, and an old 6.0.400 (support ended November 2024) in /usr/share/dotnet. ~/.bashrc puts ~/.dotnet first on PATH, but my shell is zsh and ~/.zshrc does not, so typing `dotnet` in zsh runs 6.0.400.
-   - Next action: I chose C# with the .NET 10 SDK. Add the .NET PATH lines to ~/.zshrc and check that `dotnet --version` shows 10.0.401.
+   - Status: available
+   - What I checked: SDKs 10.0.401 and 8.0.425 are installed in ~/.dotnet, and an old 6.0.400 (support ended November 2024) in /usr/share/dotnet. ~/.bashrc put ~/.dotnet first on PATH, but my shell is zsh and ~/.zshrc did not, so typing `dotnet` in zsh ran 6.0.400. On 2026-11-25 I added the same lines to ~/.zshrc; in a new zsh, `dotnet --version` shows 10.0.401.
+   - Next action: none; I chose C# with the .NET 10 SDK and it is ready.
 5. Database (PostgreSQL)
    - Status: available, not running
    - What I checked: the psql 18.6 client and the PostgreSQL 18 server are installed. The postgresql service is inactive; I did not start it or connect to a database. No GUI tool (pgAdmin, DBeaver) is installed.
