@@ -75,14 +75,20 @@ new --Popen--> running (CPU phase, 0.75 s) --input()--> waiting for terminal inp
 - Creation evidence (`Popen` or `fork`): after `subprocess.Popen`, the parent printed "child PID is 196865"; the child printed PID=196865 PPID=196864.
 - Event that made the child wait: `input()` needed a line from the terminal.
 - Event that let the child continue: I pressed Enter in Terminal A (the output file was written at 20:28:12).
-- Exit result reported by parent: (pending: last lines of Terminal A)
+- Exit result reported by parent: "PARENT: wait() returned; child exit code was 7." Code 7 is non-zero on purpose in this lab, so the parent reported it and then finished normally itself.
 - What “reaped by parent” means here: the parent's `wait()` collected the child's exit code, so the kernel could remove the finished child completely. At 20:29:18, `ps -p 196865,196864` showed neither process.
 
 ### Windows and POSIX comparison
 
 Name what fork creates, what exec replaces, and what wait observes. Explain how Windows CreateProcess differs. Label a supplied POSIX trace if you did not run it.
 
-(pending: run of `starter/fork_exec_wait.py`)
+Observed on Linux: I ran `python starter/fork_exec_wait.py` on 2026-11-25 (output file written at 20:34:18).
+
+- **fork** created a copy of the parent process: parent PID 221064 printed "created PID=221108".
+- **exec** (`execv`) replaced the program inside that copy with Python running `child.py`. The PID did not change: `child.py` printed `PID=221108 PPID=221064`, so exec replaces the program, not the process.
+- **wait** (`waitpid`) let the parent observe the child's end: "waited for PID=221108; exit code=7".
+
+Windows has no `fork()`. `CreateProcess` creates a new process and loads the new program in one step, so there is no copy of the parent and no separate exec. I did not run anything on Windows; this part comes from the course materials. The portable `parent.py` uses `subprocess.Popen`, which chooses the platform's own mechanism (on Linux it may use `posix_spawn` instead of fork + exec), so my first run does not prove which call was used.
 
 ## 4. Saved synthetic output
 
