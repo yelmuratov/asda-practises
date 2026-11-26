@@ -105,6 +105,7 @@ Windows has no `fork()`. `CreateProcess` creates a new process and loads the new
 - My prediction: the parent will report code 0. (Correct.)
 - Visible result: the child printed "exiting with code 0." and the parent printed "wait() returned; child exit code was 0." The line "non-zero is intentional in this lab" no longer appeared, and the parent finished normally (child PID 226079, PPID 226059).
 - Did the output file agree with the result? Yes: `output/child-result.txt` (written at 20:36:20) shows `child_pid=226079` and `requested_exit_code=0`.
+- Limitation: one run on one Linux laptop, changing only `EXIT_CODE`. It shows how the parent reacts to 0 and 7, but it does not test other non-zero codes or Windows/macOS.
 
 ## 6. Runtime ADR — provisional project runtime
 
@@ -130,6 +131,8 @@ Windows has no `fork()`. `CreateProcess` creates a new process and loads the new
 
   The child's exit code and its output file only exist once the child has finished, so the parent must wait to report the real result instead of a guess. Waiting also lets the kernel reap the finished child; without `wait()`, the ended child would stay as a "zombie" entry until the parent exits. Trade-off: the parent cannot do anything else while it waits, which is acceptable for one short helper.
 
+- **When to reconsider:** if the lecturer requires Java, or if a teammate's laptop cannot install the needed .NET SDK.
+
 ## 7. Exit check
 
 Tick each item you can show the teacher:
@@ -140,4 +143,4 @@ Tick each item you can show the teacher:
 - [x] I identified the intentional exit code and synthetic output file.
 - [x] I completed the boundary diagram, lifecycle, Windows/POSIX comparison and ADR.
 - [x] I explained ready versus blocked and why saved output survives exit.
-- [ ] I saved this worksheet in the location the teacher specified.
+- [x] I saved this worksheet in the location the teacher specified. (Saved and submitted on the course website, My lesson work → P02, on 2026-11-26.)
