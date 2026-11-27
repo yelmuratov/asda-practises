@@ -1,0 +1,23 @@
+# The hotel booking app's database: PostgreSQL 18 in Docker.
+#   docker compose up -d       start it in the background
+#   docker compose down        stop it, keep the data
+#   docker compose down -v     stop it and delete the data
+# "name" fixes the project name, so the next practice folders reuse the same volume (P08 starts from this data).
+name: hotel-booking
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: hotel
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel   # for this laptop only
+    ports:
+      # Port 5432 is taken on this laptop, so PostgreSQL is published on 15432, and only on 127.0.0.1.
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro   # runs once, when the database is first created
+      - hotel-data:/var/lib/postgresql                          # the data survives a restart
+
+volumes:
+  hotel-data:
