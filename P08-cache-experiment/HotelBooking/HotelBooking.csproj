@@ -11,6 +11,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <!-- The API serves its contract: the build copies docs/openapi.yaml next to the program. -->
     <None Include="..\docs\openapi.yaml" Link="openapi.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="StackExchange.Redis" Version="3.4.20" />
   </ItemGroup>
 
 </Project>

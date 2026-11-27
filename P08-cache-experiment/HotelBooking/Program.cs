@@ -11,6 +11,7 @@ using HotelBooking.Reservations.Internal;
 using HotelBooking.Rooms;
 using HotelBooking.Rooms.Internal;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 var r7 = new Room("R7", "Standard");
 var r8 = new Room("R8", "Deluxe");
@@ -27,8 +28,8 @@ else RunApi();
 
 void RunApi()
 {
-    // The wiring for the web app: PostgreSQL from docker-compose.yml, published on 15432 on this laptop
-    // (HOTEL_DB_PORT overrides it, e.g. 5432 where that port is free).
+    // The wiring for the web app: PostgreSQL and Redis from docker-compose.yml, published on 15432 and 16379
+    // on this laptop (HOTEL_DB_PORT and HOTEL_REDIS_PORT override them, e.g. 5432 and 6379 where those are free).
     var builder = WebApplication.CreateBuilder(args);
     var connection = $"Host=localhost;Port={Environment.GetEnvironmentVariable("HOTEL_DB_PORT") ?? "15432"};Database=hotel;Username=hotel;Password=hotel";
     builder.Services.AddDbContextFactory<RoomsDb>(options => options.UseNpgsql(connection));
@@ -40,6 +41,9 @@ void RunApi()
     var databases = app.Services.GetRequiredService<IDbContextFactory<ReservationsDb>>();
     var email = new EmailNotificationSender();
     var stats = new Stats();
+    // Connect stops the app here if Redis is not running.
+    var redis = ConnectionMultiplexer.Connect($"localhost:{Environment.GetEnvironmentVariable("HOTEL_REDIS_PORT") ?? "16379"}");
+    var cache = new AvailabilityCache(new RedisKeyValueStore(redis.GetDatabase()));
 
     // One request: a fresh store over its own DbContext, counted for GET /stats; save what changed at the end.
     IResult UnitOfWork(Func<BookingService, IResult> work)
@@ -51,7 +55,7 @@ void RunApi()
         return result;
     }
 
-    HotelApi.Map(app, rooms, UnitOfWork, stats);
+    HotelApi.Map(app, rooms, UnitOfWork, stats, cache);
     app.Run("http://localhost:5080");
 }
 

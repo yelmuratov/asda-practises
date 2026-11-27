@@ -37,7 +37,7 @@ public static class HotelApi
         _ => Problem(400, "InvalidDates", "checkOut must be after checkIn."),
     };
 
-    public static void Map(WebApplication app, IReadOnlyList<Room> rooms, UnitOfWork unitOfWork, Stats stats)
+    public static void Map(WebApplication app, IReadOnlyList<Room> rooms, UnitOfWork unitOfWork, Stats stats, AvailabilityCache cache)
     {
         // The contract itself, so a client can read it from the running app.
         app.MapGet("/openapi.yaml", () => Results.Text(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "openapi.yaml")), "application/yaml"));
@@ -54,10 +54,28 @@ public static class HotelApi
                 return Problem(400, "InvalidRequest", "limit must be a whole number from 1 to 100.");
 
             stats.AddSearch();
+            // Cache-aside (L04): Redis first; only on a miss ask PostgreSQL, then keep a copy for 30 s.
+            // The key is built once, before PostgreSQL is asked.
+            var key = cache.Key(checkIn!, checkOut!);
+            if (cache.Get(key) is { } cached)
+            {
+                stats.AddCacheHit();
+                var numbers = cached.Split(',');
+                return Page(rooms.Where(room => numbers.Contains(room.Number))); // no unit of work, no database
+            }
+            stats.AddCacheMiss();
             return unitOfWork(service =>
             {
+                var free = service.FindFreeRooms(stay);
+                cache.Set(key, string.Join(",", free.Select(room => room.Number).Order(StringComparer.Ordinal)));
+                return Page(free);
+            });
+
+            // Paging works on the copy, so one copy serves every page (limit and after).
+            IResult Page(IEnumerable<Room> free)
+            {
                 // Cursor pagination (L04): the rooms after the last one the client has seen, in text order.
-                var rest = service.FindFreeRooms(stay).Where(room => string.CompareOrdinal(room.Number, after ?? "") > 0)
+                var rest = free.Where(room => string.CompareOrdinal(room.Number, after ?? "") > 0)
                     .OrderBy(room => room.Number, StringComparer.Ordinal).ToList();
                 var page = rest.Take(int.Parse(limit)).ToList();
                 return Results.Json(new
@@ -66,7 +84,7 @@ public static class HotelApi
                     rooms = page.Select(room => new { number = room.Number, type = room.Type }),
                     next = rest.Count > page.Count ? page[^1].Number : null,
                 });
-            });
+            }
         });
 
         app.MapPost("/reservations", async (HttpRequest request) =>
@@ -89,11 +107,20 @@ public static class HotelApi
 
             // Overlaps and dates in the wrong order are still decided by BookingService: the rule lives in one place.
             var guest = new Guest(Text("guestName")!, Text("guestEmail")!);
-            return unitOfWork(service => ToHttp(service.Reserve(guest, room, new DateRange(start, end))));
+            var answer = unitOfWork(service => ToHttp(service.Reserve(guest, room, new DateRange(start, end))));
+            // Invalidate only after the unit of work, when the booking is saved in PostgreSQL. Raised earlier,
+            // a search in between could store the old answer under the new version. 409 and 400 changed nothing.
+            if (answer is IStatusCodeHttpResult { StatusCode: 201 }) cache.Invalidate();
+            return answer;
         });
 
-        app.MapDelete("/reservations/{id}", (string id) => unitOfWork(service => service.Cancel(id)
-            ? Results.NoContent()
-            : Problem(404, "NotFound", $"There is no confirmed reservation {id}.")));
+        app.MapDelete("/reservations/{id}", (string id) =>
+        {
+            var answer = unitOfWork(service => service.Cancel(id)
+                ? Results.NoContent()
+                : Problem(404, "NotFound", $"There is no confirmed reservation {id}."));
+            if (answer is IStatusCodeHttpResult { StatusCode: 204 }) cache.Invalidate(); // after the cancel is saved
+            return answer;
+        });
     }
 }

@@ -19,8 +19,20 @@ public class ApiTests
     private const string Search = "/rooms/availability?checkIn=2026-11-12&checkOut=2026-11-14";
     private static readonly object Maya = new { guestName = "Maya", guestEmail = "maya@example.com", room = "R7", checkIn = "2026-11-12", checkOut = "2026-11-14" };
     private static readonly object Omar = new { guestName = "Omar", guestEmail = "omar@example.com", room = "R7", checkIn = "2026-11-13", checkOut = "2026-11-15" };
+    private const string BothFree = """{"checkIn":"2026-11-12","checkOut":"2026-11-14","rooms":[{"number":"R7","type":"Standard"},{"number":"R8","type":"Deluxe"}],"next":null}""";
+    private const string OnlyR8 = """{"checkIn":"2026-11-12","checkOut":"2026-11-14","rooms":[{"number":"R8","type":"Deluxe"}],"next":null}""";
 
-    // The web app with the in-memory store, as the wiring built it before Step 8.
+    // Redis's three commands on a dictionary, so the tests need no Redis. The tests take far less than
+    // 30 seconds, so the TTL can be ignored.
+    private class InMemoryKeyValueStore : IKeyValueStore
+    {
+        private readonly Dictionary<string, string> _values = [];
+        public string? Get(string key) => _values.GetValueOrDefault(key);
+        public void Set(string key, string value, TimeSpan ttl) => _values[key] = value;
+        public void Increment(string key) => _values[key] = (int.Parse(_values.GetValueOrDefault(key, "0")) + 1).ToString();
+    }
+
+    // The web app with the in-memory store, counted for GET /stats, and the cache in a dictionary.
     private static async Task<HttpClient> NewClient()
     {
         var stats = new Stats();
@@ -28,7 +40,7 @@ public class ApiTests
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         var app = builder.Build();
-        HotelApi.Map(app, Rooms, work => work(service), stats); // a list in memory has nothing to save at the end of a request
+        HotelApi.Map(app, Rooms, work => work(service), stats, new AvailabilityCache(new InMemoryKeyValueStore())); // a list in memory has nothing to save at the end of a request
         await app.StartAsync();
         return app.GetTestClient();
     }
@@ -76,5 +88,27 @@ public class ApiTests
         var second = await client.DeleteAsync("/reservations/R101");
         Assert.Equal(HttpStatusCode.NotFound, second.StatusCode);
         Assert.Equal("NotFound", await Title(second));
+    }
+
+    // P08: the second search for the same stay is answered from the copy, without the database.
+    [Fact]
+    public async Task The_second_search_is_answered_by_the_cache()
+    {
+        var client = await NewClient();
+        var first = await client.GetStringAsync(Search);
+        Assert.Equal(first, await client.GetStringAsync(Search));
+        Assert.Equal("""{"searches":2,"databaseQueries":2,"cacheHits":1,"cacheMisses":1}""", await client.GetStringAsync("/stats"));
+    }
+
+    // P08: a booking and a cancel raise the version, so the next search asks the store again.
+    [Fact]
+    public async Task A_booking_and_a_cancel_make_the_next_search_fresh()
+    {
+        var client = await NewClient();
+        Assert.Equal(BothFree, await client.GetStringAsync(Search));
+        Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/reservations", Maya)).StatusCode);
+        Assert.Equal(OnlyR8, await client.GetStringAsync(Search));
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync("/reservations/R101")).StatusCode);
+        Assert.Equal(BothFree, await client.GetStringAsync(Search));
     }
 }
